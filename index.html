@@ -146,6 +146,7 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
     <label>E-posta<input id="lEmail" type="email" autocomplete="email" required></label>
     <label>Şifre<input id="lPass" type="password" autocomplete="current-password" required></label>
     <button class="btn" type="submit">Giriş yap</button>
+    <button class="btn ghost" type="button" id="magic">Şifresiz: e-postama giriş bağlantısı gönder</button>
     <span class="status" id="lStatus"></span>
   </form>
 </main>
@@ -208,6 +209,11 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
     <div class="hero"><span class="eyebrow">Koç</span><h1>Bugünün notları</h1></div>
     <div id="notes" class="view"></div>
     <div class="card"><h2>7 günlük plan</h2><div class="coach" id="planNote" hidden></div><div class="days" id="days"></div></div>
+    <form class="card" id="pwForm">
+      <span class="eyebrow">Yeni şifre belirle</span>
+      <input id="pwNew" type="password" autocomplete="new-password" minlength="8" placeholder="En az 8 karakter" aria-label="Yeni şifre" required>
+      <div class="row"><span class="status" id="pwStatus"></span><button class="btn" type="submit">Kaydet</button></div>
+    </form>
     <button class="btn ghost" id="logout" type="button">Çıkış yap</button>
   </section>
 </main>
@@ -469,10 +475,20 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
     const {error} = await sb.auth.signInWithPassword({email:$("lEmail").value.trim(), password:$("lPass").value});
     $("lStatus").textContent = error ? "E-posta ya da şifre hatalı." : ""; });
   $("logout").addEventListener("click", ()=>sb.auth.signOut());
+  const APP_URL = location.origin + location.pathname.replace(/index\.html$/, "");
+  $("magic").addEventListener("click", async ()=>{
+    const email = $("lEmail").value.trim(); if (!email){ $("lStatus").textContent = "Önce e-postanı yaz."; $("lEmail").focus(); return; }
+    $("lStatus").textContent = "Gönderiliyor…";
+    const {error} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:false, emailRedirectTo:APP_URL}});
+    $("lStatus").textContent = error ? "Gönderilemedi: "+error.message : "E-postana bir bağlantı gönderildi. Bu cihazda aç, giriş yapılır.";
+  });
+  $("pwForm").addEventListener("submit", async e=>{ e.preventDefault();
+    const {error} = await sb.auth.updateUser({password:$("pwNew").value});
+    $("pwStatus").textContent = error ? "Kaydedilemedi: "+error.message : "Yeni şifre kaydedildi."; if(!error) $("pwNew").value=""; });
 
   async function start(){
     if (!window.supabase){ $("loginView").hidden=false; $("lStatus").textContent="Bağlantı kurulamadı. İnterneti kontrol et."; return; }
-    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true, autoRefreshToken:true}});
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit"}});
     sb.auth.onAuthStateChange((_e, session)=>{ const u = session?.user || null; const changed = (u?.id) !== (user?.id); user = u; setView(!!u); if (u && changed) loadData(); });
     const {data:{session}} = await sb.auth.getSession(); user = session?.user || null; setView(!!user);
     let t; try { t = localStorage.getItem("ng-tab"); } catch(e){} show(t||"bugun");
