@@ -44,6 +44,17 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
 .top .d{display:flex;flex-direction:column;line-height:1.3}
 .top .d b{font-size:13px;font-weight:600;color:var(--muted)}
 .top .d span{font-size:12px;color:var(--faint)}
+.datenav{display:flex;align-items:center;gap:2px;min-width:0}
+.datenav .nav{width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:var(--muted);font-size:22px;display:grid;place-items:center;flex:none}
+.datenav .nav:disabled{opacity:.3;cursor:default}
+.datelbl{position:relative;display:flex;flex-direction:column;line-height:1.3;padding:4px 6px;border-radius:12px;min-width:0}
+.datelbl b{font-size:14px;font-weight:700;white-space:nowrap}
+.datelbl span{font-size:12px;color:var(--faint)}
+.datelbl input{position:absolute;inset:0;opacity:0;width:100%;padding:0;border:0;cursor:pointer}
+.todaychip{border:1px solid var(--line);background:var(--chip);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;flex:none}
+button.tri,button.tile,button.card{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+button.tri:active,button.tile:active,button.card:active{transform:scale(.98)}
+.go{font-size:13px;font-weight:700;color:var(--good)}
 .iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:var(--chip);display:grid;place-items:center;flex:none}
 .iconbtn svg{width:18px;height:18px}
 .iconbtn.spin svg{animation:spin 1s linear infinite}
@@ -153,7 +164,12 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
 
 <main class="app" id="appView" hidden>
   <header class="top">
-    <div class="d"><b id="dateLbl">—</b><span id="syncLbl">Bağlanıyor…</span></div>
+    <div class="datenav">
+      <button class="nav" id="dPrev" aria-label="Önceki gün">‹</button>
+      <label class="datelbl"><b id="dateLbl">—</b><span id="syncLbl">Bağlanıyor…</span><input type="date" id="dPick" aria-label="Tarih seç"></label>
+      <button class="nav" id="dNext" aria-label="Sonraki gün">›</button>
+      <button class="todaychip" id="dToday" hidden>Bugün</button>
+    </div>
     <button class="iconbtn" id="refresh" aria-label="Garmin verisini şimdi yenile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
   </header>
 
@@ -166,20 +182,22 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
     </div>
     <div class="trio" id="trio"></div>
 
-    <div class="card">
+    <button class="card" data-go="coach" aria-label="Antrenman ve koç notları">
       <div class="row"><span class="eyebrow">Antrenman</span><span id="planPill"></span></div>
       <h2 id="planT">—</h2>
       <span class="small muted" id="planN"></span>
       <div class="wx" id="wx" hidden></div>
       <div class="coach" id="coach" hidden></div>
       <div class="week" id="week" aria-label="Bu haftanın planı"></div>
-    </div>
+      <span class="go">Koç notları ve 7 günlük plan →</span>
+    </button>
 
     <div class="grid2">
-      <div class="tile"><span class="l">Body Battery</span><span class="v" id="bb">—</span><div class="bar blue"><span id="bbBar" style="width:0%"></span></div></div>
-      <div class="tile"><span class="l" id="smokeL">Sigara bırakma</span><span class="v" id="smokeV">—</span><span class="small muted" id="smokeS"></span></div>
+      <button class="tile" data-go="food"><span class="l">Beslenme</span><span class="v" id="kcalV">0</span><span class="small muted" id="protV">protein 0 / 170 g</span></button>
+      <button class="tile" data-go="vital"><span class="l">Body Battery</span><span class="v" id="bb">—</span><div class="bar blue"><span id="bbBar" style="width:0%"></span></div></button>
+      <button class="tile" data-sheet="1"><span class="l" id="smokeL">Sigara bırakma</span><span class="v" id="smokeV">—</span><span class="small muted" id="smokeS"></span></button>
       <div class="tile"><span class="l">Su</span><span class="v" id="waterV">0<small>/ 3 L</small></span><div class="stepper"><button id="wMinus" aria-label="250 ml çıkar">−</button><button id="wPlus" aria-label="250 ml ekle">+</button></div></div>
-      <div class="tile"><span class="l">Adım</span><span class="v" id="stepsV">—</span><div class="bar"><span id="stepsBar" style="width:0%"></span></div><span class="small faint" id="stepsS"></span></div>
+      <button class="tile" data-go="vital"><span class="l">Adım</span><span class="v" id="stepsV">—</span><div class="bar"><span id="stepsBar" style="width:0%"></span></div><span class="small faint" id="stepsS"></span></button>
     </div>
   </section>
 
@@ -233,7 +251,7 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
 <div class="sheet-bg" id="sheetBg" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Hızlı kayıt" hidden>
   <div class="grab"></div>
-  <h2>Hızlı kayıt</h2>
+  <h2 id="sheetH">Hızlı kayıt</h2>
   <div class="qrow"><div class="l"><span>Su</span><b id="qWater">0 L</b></div><div class="stepper"><button data-q="water:-0.25" aria-label="250 ml çıkar">−</button><button data-q="water:0.25" aria-label="250 ml ekle">+</button></div></div>
   <div class="qrow"><div class="l"><span>Sigara (bugün)</span><b id="qCigs">0</b></div><div class="stepper"><button data-q="cigs:-1" aria-label="Bir azalt">−</button><button data-q="cigs:1" aria-label="Bir ekle">+</button></div></div>
   <form class="qrow" id="wForm"><label class="l" for="qWeight"><span>Sabah kilo (kg)</span></label><div class="stepper" style="flex:1;justify-content:flex-end"><input id="qWeight" type="number" step="0.1" min="40" max="200" inputmode="decimal" placeholder="91,0" style="max-width:110px"><button class="btn" type="submit">Kaydet</button></div></form>
@@ -296,7 +314,7 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
   const daysBetween = (a,b) => Math.round((new Date(b+"T12:00:00Z")-new Date(a+"T12:00:00Z"))/86400000);
   const WD = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
 
-  let sb = null, user = null, days = {}, plan = null, WX = null, today = dayNow();
+  let sb = null, user = null, days = {}, plan = null, WX = null, today = dayNow(); let realToday = dayNow();
   function toast(t){ const el=$("toast"); el.textContent=t; el.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>el.hidden=true, 2200); }
 
   /* sekmeler */
@@ -325,15 +343,15 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
   /* render */
   function renderToday(){
     const g = garminToday(), s = dayState(g), lg = logOf(today);
-    $("dateLbl").textContent = fmtDate(today);
     const SC = {good:["#8FD3B0","Hazır"], warn:["#F6C26B","Toparlanıyor"], bad:["#F29A82","Dinlen"]};
     $("amb").style.background = s ? SC[s][0] : "#E8DFD0";
     $("state").hidden = !s; if(s){ $("state").style.color = col(s); $("stateTxt").textContent = SC[s][1]; }
-    $("headline").innerHTML = !s ? "Günaydın Kerem." : s==="bad" ? "Bugün dinlen.<small>Yürüyüş ve esneme yeter.</small>" : s==="warn" ? "Bugün kolay git.<small>Kolay koşu ya da ağırlık.</small>" : "Bugün hazırsın.<small>Plana devam.</small>";
+    const isT = today===realToday;
+    $("headline").innerHTML = !isT ? (!s ? "Bu gün için Garmin verisi yok." : s==="bad" ? "Düşük toparlanma günü." : s==="warn" ? "Orta seviye bir gün." : "İyi toparlanmış bir gün.") : !s ? "Günaydın Kerem." : s==="bad" ? "Bugün dinlen.<small>Yürüyüş ve esneme yeter.</small>" : s==="warn" ? "Bugün kolay git.<small>Kolay koşu ya da ağırlık.</small>" : "Bugün hazırsın.<small>Plana devam.</small>";
     const off = g ? [["sleepScore","uyku skoru"],["hrvNight","HRV"],["rhr","dinlenik nabız"]].filter(([k])=>{ const x=st(k,g[k]); return x && x!=="good"; }) : [];
     $("why").textContent = !g ? "Garmin verisi bekleniyor." : off.length ? off.map(([k,l])=>`${l[0].toUpperCase()+l.slice(1)} ${g[k]} (normalin ${BASE[k].lo}–${BASE[k].hi})`).join(" · ") : "Uyku, HRV ve nabız normal aralığında.";
     const hm = h => { const m=Math.round(h*60); return `${Math.floor(m/60)} sa ${String(m%60).padStart(2,"0")} dk`; };
-    const tri = (l,v,u,sub,s2) => `<div class="tri"><span class="l">${l}</span><span class="v">${v ?? "—"}${v!=null&&u?`<small>${u}</small>`:""}</span><span class="s" style="color:${col(s2)}">${sub}</span></div>`;
+    const tri = (l,v,u,sub,s2) => `<button class="tri" data-go="vital"><span class="l">${l}</span><span class="v">${v ?? "—"}${v!=null&&u?`<small>${u}</small>`:""}</span><span class="s" style="color:${col(s2)}">${sub}</span></button>`;
     $("trio").hidden = !g;
     if (g){ const sS=st("sleepScore",g.sleepScore), sH=st("hrvNight",g.hrvNight), sR=st("rhr",g.rhr);
       $("trio").innerHTML = tri("Uyku", g.sleepScore, "", g.sleepH!=null?hm(g.sleepH):"—", g.sleepH!=null&&g.sleepH<6?"warn":sS)
@@ -352,6 +370,8 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
       wk += `<div class="wk ${k}${done?" done":""}${dd===today?" now":""}" title="${esc(pp?.t||"")}">${WD[i]}<i>${done?"✓":k==="hard"?"!":k==="rest"?"–":"•"}</i></div>`; }
     $("week").innerHTML = wk;
     // kutucuklar
+    { const fs = lg.foods || []; const kc = fs.reduce((a,f)=>a+(+f.kcal||0),0), pr = fs.reduce((a,f)=>a+(+f.protein||0),0);
+      $("kcalV").innerHTML = fmtN(kc)+`<small>/ ${fmtN(targetKcal())}</small>`; $("protV").textContent = `protein ${Math.round(pr)} / 170 g`; }
     $("bb").textContent = g?.bbNow ?? g?.bbHigh ?? "—"; $("bbBar").style.width = ((g?.bbNow ?? g?.bbHigh ?? 0))+"%";
     const w = +(lg.water||0); $("waterV").innerHTML = dec(w,2)+"<small>/ 3 L</small>"; $("qWater").textContent = dec(w,2)+" L";
     const cT = +(lg.cigs||0); $("qCigs").textContent = cT;
@@ -403,7 +423,18 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
       rows.push(`<div class="dr"><div class="d">${WD[dayIdx(dd)]}<b>${+dd.slice(8)}</b></div><div><div class="t">${esc(p.t)}</div><div class="x">${esc(p.n)}</div></div></div>`); }
     $("days").innerHTML = rows.join("") || '<span class="empty">Plan, Claude\'daki panel açıldığında buraya aktarılır.</span>';
   }
-  function renderAll(){ today = dayNow(); renderToday(); renderVital(); renderFood(); renderCoach(); }
+  function renderNav(){
+    const isT = today===realToday;
+    $("dateLbl").textContent = isT ? "Bugün · "+fmtShort(today) : fmtDate(today);
+    $("dNext").disabled = today>=realToday; $("dToday").hidden = isT; $("dPick").max = realToday; $("dPick").value = today;
+  }
+  function go(d){ if (d>realToday) d=realToday; today=d; renderAll(); if (!days[d] && d < addDays(realToday,-60)) loadData(d); }
+  $("dPrev").addEventListener("click", ()=>go(addDays(today,-1)));
+  $("dNext").addEventListener("click", ()=>go(addDays(today,1)));
+  $("dToday").addEventListener("click", ()=>go(realToday));
+  $("dPick").addEventListener("change", e=>{ if (e.target.value) go(e.target.value); });
+  document.addEventListener("click", e=>{ const g=e.target.closest("[data-go]"); if (g){ show(g.dataset.go); return; } if (e.target.closest("[data-sheet]")) openSheet(true); });
+  function renderAll(){ const rt = dayNow(); if (rt !== realToday){ if (today===realToday) today = rt; realToday = rt; } renderNav(); renderToday(); renderVital(); renderFood(); renderCoach(); }
 
   /* hava: Open-Meteo (tahmin + hava kalitesi), Prenzlauer Berg */
   const WCODE = c => c==null?"":c===0?"Açık":c<=2?"Parçalı bulutlu":c===3?"Kapalı":c<=48?"Sisli":c<=57?"Çiseleme":c<=67?"Yağmurlu":c<=77?"Karlı":c<=82?"Sağanak":"Fırtına";
@@ -427,20 +458,20 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
   }
 
   /* veri */
-  async function loadData(){
-    const from = addDays(dayNow(), -60);
+  async function loadData(older){
+    const from = older ? addDays(older, -30) : addDays(dayNow(), -60);
     const [{data:rows, error}, {data:docs}] = await Promise.all([
       sb.from("days").select("day,garmin,log,coach,morning,feedback").gte("day", from),
       sb.from("docs").select("id,data").eq("id","plan")
     ]);
     if (error){ $("syncLbl").textContent = "Veriye ulaşılamadı"; return; }
-    const next={}; (rows||[]).forEach(r=>{ next[r.day]=r; }); days=next;
+    const next = older ? {...days} : {}; if (!older) Object.keys(days).filter(k=>k<from).forEach(k=>next[k]=days[k]); (rows||[]).forEach(r=>{ next[r.day]=r; }); days=next;
     plan = docs?.[0]?.data || null;
     renderAll();
   }
   let saving = Promise.resolve();
   function saveLog(mut){
-    const d = dayNow(); const cur = {...(days[d]?.log||{})}; mut(cur); cur.at = Date.now();
+    const d = today; const cur = {...(days[d]?.log||{})}; mut(cur); cur.at = Date.now();
     days[d] = {...(days[d]||{day:d}), log:cur}; renderAll();
     const run = async ()=>{ const {error} = await sb.from("days").upsert({owner:user.id, day:d, log:cur}, {onConflict:"owner,day"}); if (error) toast("Kaydedilemedi, tekrar dene."); };
     saving = saving.then(run, run); return saving;
@@ -456,7 +487,7 @@ h2{margin:0;font-family:var(--display);font-weight:600;font-size:24px;letter-spa
   ["quick","quick2"].forEach(id=>{ $(id).innerHTML = chipHtml; $(id).addEventListener("click", e=>{ const b=e.target.closest("[data-f]"); if(b) addFood(QUICK[+b.dataset.f]); }); });
 
   /* hızlı kayıt sayfası */
-  const openSheet = o => { $("sheet").hidden = $("sheetBg").hidden = !o; };
+  const openSheet = o => { $("sheetH").textContent = today===realToday ? "Hızlı kayıt" : "Hızlı kayıt · "+fmtShort(today); $("sheet").hidden = $("sheetBg").hidden = !o; };
   $("fab").addEventListener("click", ()=>openSheet(true));
   $("sheetClose").addEventListener("click", ()=>openSheet(false));
   $("sheetBg").addEventListener("click", ()=>openSheet(false));
